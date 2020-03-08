@@ -43,7 +43,7 @@ if not os.path.isdir(duplicate_dir):
 def is_image(image_file):
     splits = image_file.split('.')
 
-    if splits in image_extensions:
+    if splits[-1] in image_extensions:
         return True
     return False
 
@@ -84,46 +84,49 @@ def get_image_date(path):
 
 def file_dates(path):
     for root, dirs, files in os.walk(path):
-        if dirs in ignore_dirs:
+        if any(e in root.split('/') for e in ignore_dirs):
             continue
+        log.info(f'{root}')
         for filename in files:
             file_path = os.path.join(root, filename)
-            if is_image(file_path):
-                try:
-                    image_date = get_image_date(file_path)
+            # if is_image(filename):
+            #     try:
+            #         image_date = get_image_date(file_path)
 
-                    new_path = os.path.join(path, orgnized_images, image_date)
-                    if not os.path.isdir(new_path):
-                        os.makedirs(new_path)
+            #         new_path = os.path.join(path, orgnized_images, image_date)
+            #         if not os.path.isdir(new_path):
+            #             os.makedirs(new_path)
+            #             log.info(f'path {new_path} created.')
 
-                    moved_path = os.path.join(new_path, filename)
-                    if file_path == moved_path:
-                        continue
-                    if not check_duplicate_file(file_path, moved_path):
-                        if not os.path.exists(moved_path):
-                            shutil.move(file_path, new_path)
-                        else:
-                            shutil.move(file_path,
-                                        os.path.join(new_path, convert_date(os.path.getctime(file_path), '%Y-%m-%d') +
-                                                     os.path.splitext(file_path)[1]))
-                    else:
-                        shutil.move(file_path, duplicate_dir)
+            #         moved_path = os.path.join(new_path, filename)
+            #         if file_path == moved_path:
+            #             continue
+            #         if not check_duplicate_file(file_path, moved_path):
+            #             if not os.path.exists(moved_path):
+            #                 shutil.move(file_path, new_path)
+            #                 log.info(f'{file_path} moved to {new_path}')
+            #             else:
+            #                 shutil.move(file_path,
+            #                             os.path.join(new_path, convert_date(os.path.getctime(file_path), '%Y-%m-%d') +
+            #                                          os.path.splitext(file_path)[1]))
+            #         else:
+            #             shutil.move(file_path, duplicate_dir)
 
-                except Exception as err:
-                    print(err)
+            #     except Exception as err:
+            #         print(err)
 
-            else:
-                try:
-                    exist_path = os.path.join(need_review, filename)
-                    if file_path == exist_path:
-                        continue
-                    if not ignore_files(file_path):
-                        if not check_duplicate_file(file_path, exist_path):
-                            shutil.move(file_path, need_review)
-                        else:
-                            shutil.move(file_path, duplicate_dir)
-                except:
-                    pass
+            # else:
+            #     try:
+            #         exist_path = os.path.join(need_review, filename)
+            #         if file_path == exist_path:
+            #             continue
+            #         if not ignore_files(file_path):
+            #             if not check_duplicate_file(file_path, exist_path):
+            #                 shutil.move(file_path, need_review)
+            #             else:
+            #                 shutil.move(file_path, duplicate_dir)
+            #     except:
+            #         pass
 
 
 file_dates(path)
