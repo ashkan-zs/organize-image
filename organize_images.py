@@ -14,6 +14,9 @@ args = parser.parse_args()
 
 path = args.src
 
+#image extensions
+image_extensions = ['heic', 'jpg', 'jpeg', 'png', 'gif', 'tiff']
+
 # Ignored extensions
 exts = ['.py']
 ignore_dirs = ['.git', '.venv', 'organized-iamges']
@@ -37,12 +40,12 @@ if not os.path.isdir(duplicate_dir):
     log.info("duplicate_dir directory created.")
 
 
-def is_image(image_path):
-    try:
-        Image.open(image_path)
-    except IOError:
-        return False
-    return True
+def is_image(image_file):
+    splits = image_file.split('.')
+
+    if splits in image_extensions:
+        return True
+    return False
 
 
 def ignore_files(path_file):
@@ -81,9 +84,9 @@ def get_image_date(path):
 
 def file_dates(path):
     for root, dirs, files in os.walk(path):
-        if [d for d in orgnized_images] in dirs:
-            dirs.remove(d)
-        for filename in [f for f in files if not f.startswith('.')]:
+        if dirs in ignore_dirs:
+            continue
+        for filename in files:
             file_path = os.path.join(root, filename)
             if is_image(file_path):
                 try:
