@@ -50,7 +50,7 @@ if not os.path.isdir(duplicate_dir):
 def should_organized(file_name):
     splits = file_name.split('.')
 
-    if splits[-1] in organized_extensions:
+    if splits[-1].lower() in organized_extensions:
         return True
     return False
 
