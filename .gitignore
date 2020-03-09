@@ -1,5 +1,8 @@
 .venv/
 imgs/
+needs-review/
+duplicate-files/
+organized-images/
 
 ## Code ##
 .vscode/*
