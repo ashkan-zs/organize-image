@@ -17,11 +17,7 @@ args = parser.parse_args()
 path = args.src
 
 #organized extensions
-organized_extensions = ['heic', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'psd', 'mov', 'mp4']
-
-# Ignored extensions
-ignore_dirs = ['.git', '.venv', 'organized-iamges']
-ignore_files = ['.gitignore']
+organized_extensions = ['heic', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'tif', 'psd', 'mov', 'mp4']
 
 ''' Directory structure for moving images
     %Y: 4 digit
@@ -33,19 +29,23 @@ ignore_files = ['.gitignore']
 dir_format = '%Y/%B'
 
 # Create required folders
-orgnized_images = 'organized-images'
+organized_images = 'organized-images'
 need_review = 'needs-review'
 duplicate_dir = 'duplicate-files'
 
+# Ignored extensions
+ignore_dirs = ['.git', '.venv', organized_images, need_review, duplicate_dir ]
+ignore_files = ['.gitignore']
+
 hash_keys = []
 
-if not os.path.isdir(need_review):
-    os.mkdir(need_review)
+if not os.path.isdir(os.path.join(path, need_review)):
+    os.mkdir(os.path.join(path, need_review))
     log.info("need_rewiew directory created.")
 
 
-if not os.path.isdir(duplicate_dir):
-    os.mkdir(duplicate_dir)
+if not os.path.isdir(os.path.join(path, duplicate_dir)):
+    os.mkdir(os.path.join(path, duplicate_dir))
     log.info("duplicate_dir directory created.")
 
 
@@ -63,9 +63,11 @@ def convert_date(timestamp, format_date):
 
 
 def check_duplicate_file(file_path):
-    if os.path.isfile(file_path):
-        with open(file_path, 'rb') as f:
+    checking_path = os.path.join(path, file_path)
+    if os.path.isfile(checking_path):
+        with open(checking_path, 'rb') as f:
             file_hash = hashlib.md5(f.read()).hexdigest()
+            log.info(file_hash)
         if file_hash not in hash_keys:
             hash_keys.append(file_hash)
             return False
@@ -81,7 +83,6 @@ def check_duplicate_file(file_path):
 
 def get_image_date(path):
     ctime = time.ctime(os.path.getmtime(path))
-
     image_date = datetime.strptime(ctime, '%a %b %d %H:%M:%S %Y')
     image_date = image_date.strftime(dir_format)
 
@@ -91,17 +92,15 @@ def get_image_date(path):
 
 def file_dates(path):
     for root, dirs, files in os.walk(path):
-
         if any(e in root.split('/') for e in ignore_dirs) or any(f in files for f in ignore_files):
             continue
 
         for filename in files:
             file_path = os.path.join(root, filename)
-
             if should_organized(filename):
                 try:
                     image_date = get_image_date(file_path)
-                    new_path = os.path.join(path, orgnized_images, image_date)
+                    new_path = os.path.join(path, organized_images, image_date)
 
                     if not os.path.isdir(new_path):
                         os.makedirs(new_path)
