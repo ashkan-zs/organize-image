@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 from datetime import datetime
+import hashlib
 
 
 log.getLogger().setLevel(log.INFO)
@@ -23,19 +24,20 @@ ignore_dirs = ['.git', '.venv', 'organized-iamges']
 ignore_files = ['.gitignore']
 
 ''' Directory structure for moving images
-    %Y: 4 digit 
+    %Y: 4 digit
     %y: 2 digit
-    %B: full name month 
+    %B: full name month
     %b
     %d: day 2digit
 '''
 dir_format = '%Y/%B'
 
+# Create required folders
 orgnized_images = 'organized-images'
-
-# Create required folders 
 need_review = 'needs-review'
 duplicate_dir = 'duplicate-files'
+
+hash_keys = []
 
 if not os.path.isdir(need_review):
     os.mkdir(need_review)
@@ -60,13 +62,21 @@ def convert_date(timestamp, format_date):
     return date
 
 
-def check_duplicate_file(src_path, des_path):
-    if os.path.exists(des_path) and src_path != des_path:
-        if get_image_date(src_path) == get_image_date(des_path):
-            return True
-        else:
+def check_duplicate_file(file_path):
+    if os.path.isfile(file_path):
+        with open(file_path, 'rb') as f:
+            file_hash = hashlib.md5(f.read()).hexdigest()
+        if file_hash not in hash_keys:
+            hash_keys.append(file_hash)
             return False
-    return False
+        return True
+
+    # if os.path.exists(des_path) and src_path != des_path:
+    #     if get_image_date(src_path) == get_image_date(des_path):
+    #         return True
+    #     else:
+    #         return False
+    # return False
 
 
 def get_image_date(path):
@@ -76,7 +86,7 @@ def get_image_date(path):
     image_date = image_date.strftime(dir_format)
 
     return image_date
-    
+
 
 
 def file_dates(path):
@@ -102,7 +112,7 @@ def file_dates(path):
                     if file_path == moved_path:
                         continue
 
-                    if not check_duplicate_file(file_path, moved_path):
+                    if not check_duplicate_file(filename):
                         if not os.path.exists(moved_path):
                             shutil.move(file_path, new_path)
                         else:
@@ -121,7 +131,7 @@ def file_dates(path):
                     if file_path == exist_path:
                         continue
                     if not ignore_files(file_path):
-                        if not check_duplicate_file(file_path, exist_path):
+                        if not check_duplicate_file(filename):
                             shutil.move(file_path, need_review)
                         else:
                             shutil.move(file_path, duplicate_dir)
