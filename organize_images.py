@@ -31,21 +31,24 @@ dir_format = '%Y/%B'
 # Create required folders
 organized_images = 'organized-images'
 need_review = 'needs-review'
-duplicate_dir = 'duplicate-files'
+duplicate = 'duplicate-files'
+
+duplicate_dir = os.path.join(path, duplicate)
+need_review_dir = os.path.join(path, need_review)
 
 # Ignored extensions
-ignore_dirs = ['.git', '.venv', organized_images, need_review, duplicate_dir ]
+ignore_dirs = ['.git', '.venv', organized_images, need_review, duplicate ]
 ignore_files = ['.gitignore']
 
 hash_keys = []
 
-if not os.path.isdir(os.path.join(path, need_review)):
-    os.mkdir(os.path.join(path, need_review))
+if not os.path.isdir(need_review_dir):
+    os.mkdir(need_review_dir)
     log.info("need_rewiew directory created.")
 
 
-if not os.path.isdir(os.path.join(path, duplicate_dir)):
-    os.mkdir(os.path.join(path, duplicate_dir))
+if not os.path.isdir(duplicate_dir):
+    os.mkdir(duplicate_dir)
     log.info("duplicate_dir directory created.")
 
 
@@ -63,11 +66,9 @@ def convert_date(timestamp, format_date):
 
 
 def check_duplicate_file(file_path):
-    checking_path = os.path.join(path, file_path)
-    if os.path.isfile(checking_path):
-        with open(checking_path, 'rb') as f:
+    if os.path.isfile(file_path):
+        with open(file_path, 'rb') as f:
             file_hash = hashlib.md5(f.read()).hexdigest()
-            log.info(file_hash)
         if file_hash not in hash_keys:
             hash_keys.append(file_hash)
             return False
@@ -89,6 +90,12 @@ def get_image_date(path):
     return image_date
 
 
+def move_to_duplicate_folder(path, date):
+    duplicate_path = os.path.join(duplicate_dir, date)
+    if not os.path.isdir(duplicate_path):
+        os.makedirs(duplicate_path)
+    shutil.move(path, duplicate_path)
+
 
 def file_dates(path):
     for root, dirs, files in os.walk(path):
@@ -97,9 +104,9 @@ def file_dates(path):
 
         for filename in files:
             file_path = os.path.join(root, filename)
+            image_date = get_image_date(file_path)
             if should_organized(filename):
                 try:
-                    image_date = get_image_date(file_path)
                     new_path = os.path.join(path, organized_images, image_date)
 
                     if not os.path.isdir(new_path):
@@ -111,7 +118,7 @@ def file_dates(path):
                     if file_path == moved_path:
                         continue
 
-                    if not check_duplicate_file(filename):
+                    if not check_duplicate_file(file_path):
                         if not os.path.exists(moved_path):
                             shutil.move(file_path, new_path)
                         else:
@@ -119,21 +126,21 @@ def file_dates(path):
                                         os.path.join(new_path, convert_date(os.path.getctime(file_path), '%Y-%m-%d') +
                                                      os.path.splitext(file_path)[1]))
                     else:
-                        shutil.move(file_path, duplicate_dir)
+                        move_to_duplicate_folder(file_path, image_date)
 
                 except Exception as err:
                     print(err)
 
             else:
                 try:
-                    exist_path = os.path.join(need_review, filename)
+                    exist_path = os.path.join(need_review_dir, filename)
                     if file_path == exist_path:
                         continue
                     if not ignore_files(file_path):
-                        if not check_duplicate_file(filename):
-                            shutil.move(file_path, need_review)
+                        if not check_duplicate_file(file_path):
+                            shutil.move(file_path, need_review_dir)
                         else:
-                            shutil.move(file_path, duplicate_dir)
+                            move_to_duplicate_folder(file_path, image_date)
                 except:
                     pass
 
