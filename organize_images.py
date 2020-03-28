@@ -17,7 +17,7 @@ args = parser.parse_args()
 path = args.src
 
 #organized extensions
-organized_extensions = ['heic', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'tif', 'psd', 'mov', 'mp4']
+organized_extensions = ['heic', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'tif', 'cr2', 'psd', 'mov', 'mp4']
 
 ''' Directory structure for moving images
     %Y: 4 digit
