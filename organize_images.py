@@ -40,6 +40,8 @@ need_review_dir = os.path.join(path, need_review)
 ignore_dirs = ['.git', '.venv', organized_images, need_review, duplicate ]
 ignore_files = ['.gitignore']
 
+# File for saveing hashes
+data_file = os.path.join(path, '.hash_data.txt')
 hash_keys = []
 
 if not os.path.isdir(need_review_dir):
@@ -50,6 +52,19 @@ if not os.path.isdir(need_review_dir):
 if not os.path.isdir(duplicate_dir):
     os.mkdir(duplicate_dir)
     log.info("duplicate_dir directory created.")
+
+
+def load_hash_file():
+    try:
+        with open(data_file, 'r') as file:
+            hash_keys.append(file.read().split())
+    except IOError:
+        hash_keys = []
+
+
+def save_hash_file():
+    with open(data_file, 'w') as file:
+        file.writelines('%s\n' % hashes for hashes in hash_keys)
 
 
 def should_organized(file_name):
@@ -98,6 +113,7 @@ def move_to_duplicate_folder(path, date):
 
 
 def file_dates(path):
+    load_hash_file()
     for root, dirs, files in os.walk(path):
         if any(e in root.split('/') for e in ignore_dirs) or any(f in files for f in ignore_files):
             continue
@@ -111,7 +127,6 @@ def file_dates(path):
 
                     if not os.path.isdir(new_path):
                         os.makedirs(new_path)
-                        log.info(f'path {new_path} created.')
 
                     moved_path = os.path.join(new_path, filename)
 
@@ -122,8 +137,9 @@ def file_dates(path):
                         if not os.path.exists(moved_path):
                             shutil.move(file_path, new_path)
                         else:
-                            shutil.move(file_path,
-                                        os.path.join(new_path, convert_date(os.path.getctime(file_path), '%Y-%m-%d') +
+                            shutil.move(file_path, os.path.join(new_path, \
+                                    convert_date(os.path.getctime(file_path),
+                                                      '%Y-%m-%d') +
                                                      os.path.splitext(file_path)[1]))
                     else:
                         move_to_duplicate_folder(file_path, image_date)
@@ -136,13 +152,13 @@ def file_dates(path):
                     exist_path = os.path.join(need_review_dir, filename)
                     if file_path == exist_path:
                         continue
-                    if not ignore_files(file_path):
-                        if not check_duplicate_file(file_path):
-                            shutil.move(file_path, need_review_dir)
-                        else:
-                            move_to_duplicate_folder(file_path, image_date)
-                except:
+                    if not check_duplicate_file(file_path):
+                        shutil.move(file_path, need_review_dir)
+                    else:
+                        move_to_duplicate_folder(file_path, image_date)
+                except Exception:
                     pass
 
 
 file_dates(path)
+save_hash_file()
