@@ -1,3 +1,4 @@
+""" Organized images and find duplicate file """
 import argparse
 import logging as log
 import os
@@ -11,12 +12,16 @@ log.getLogger().setLevel(log.INFO)
 parser = argparse.ArgumentParser(
     description='This is a script for organizing photos by date')
 parser.add_argument(
-    '-s', '--src', help='the directory you want to organize', nargs='?', default=os.getcwd())
+    '-s',
+    '--src',
+    help='the directory you want to organize',
+    nargs='?',
+    default=os.getcwd())
 args = parser.parse_args()
 
 path = args.src
 
-#organized extensions
+# Organized extensions
 organized_extensions = ['heic', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'tif', 'cr2', 'psd', 'mov', 'mp4']
 
 ''' Directory structure for moving images
@@ -59,7 +64,7 @@ def load_hash_file():
         with open(data_file, 'r') as file:
             hash_keys.append(file.read().split())
     except IOError:
-        hash_keys = []
+        pass
 
 
 def save_hash_file():
@@ -83,7 +88,7 @@ def convert_date(timestamp, format_date):
 def check_duplicate_file(file_path):
     if os.path.isfile(file_path):
         with open(file_path, 'rb') as f:
-            file_hash = hashlib.md5(f.read()).hexdigest()
+            file_hash = hashlib.sha1(f.read()).hexdigest()
         if file_hash not in hash_keys:
             hash_keys.append(file_hash)
             return False
@@ -115,7 +120,8 @@ def move_to_duplicate_folder(path, date):
 def file_dates(path):
     load_hash_file()
     for root, dirs, files in os.walk(path):
-        if any(e in root.split('/') for e in ignore_dirs) or any(f in files for f in ignore_files):
+        if any(e in root.split('/') for e in ignore_dirs) or \
+                any(f in files for f in ignore_files):
             continue
 
         for filename in files:
@@ -137,10 +143,10 @@ def file_dates(path):
                         if not os.path.exists(moved_path):
                             shutil.move(file_path, new_path)
                         else:
-                            shutil.move(file_path, os.path.join(new_path, \
+                            shutil.move(file_path, os.path.join(new_path,
                                     convert_date(os.path.getctime(file_path),
-                                                      '%Y-%m-%d') +
-                                                     os.path.splitext(file_path)[1]))
+                                                 '%Y-%m-%d') +
+                                               os.path.splitext(file_path)[1]))
                     else:
                         move_to_duplicate_folder(file_path, image_date)
 
